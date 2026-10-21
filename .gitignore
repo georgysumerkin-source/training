@@ -1,5 +1,5 @@
 *.DS_store
 *.log
-*env
+*.env
 .env.*
 !.env.example
