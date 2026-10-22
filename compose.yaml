@@ -3,6 +3,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: "${IMAGE_NAME}:${IMAGE_TAG}"
+    image: "${IMAGE_NAME:-image}:${IMAGE_TAG:-tag}"
     ports:
-      - "${COMPOSE_HOST}:${SERVICE_PORT}:${LISTEN_PORT}"
+      - "${COMPOSE_HOST:-127.0.0.1}:${SERVICE_PORT:-9090}:${LISTEN_PORT:-9090}"
