@@ -25,7 +25,6 @@ func main() {
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
-			_ = conn.Close()
 			panic(err)
 		}
 
