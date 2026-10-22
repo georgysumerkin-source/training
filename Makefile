@@ -1,0 +1,17 @@
+IMAGE_NAME := training-demo
+IMAGE_TAG := 0.0.1
+CONTAINER_NAME := test
+
+SERVICE_PORT := 9090
+LISTEN_PORT := 9090
+COMPOSE_HOST := 127.0.0.1
+
+
+docker-build:
+	docker build -t $(IMAGE_NAME):$(IMAGE_TAG) .
+
+docker-run:
+	docker run -d -p $(SERVICE_PORT):$(LISTEN_PORT) $(IMAGE_NAME):$(IMAGE_TAG)
+
+docker-compose:
+	IMAGE_NAME=$(IMAGE_NAME) IMAGE_TAG=$(IMAGE_TAG) SERVICE_PORT=$(SERVICE_PORT) LISTEN_PORT=$(LISTEN_PORT) docker compose up -d

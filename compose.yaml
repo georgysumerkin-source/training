@@ -1,0 +1,8 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: "${IMAGE_NAME}:${IMAGE_TAG}"
+    ports:
+      - "${COMPOSE_HOST}:${SERVICE_PORT}:${LISTEN_PORT}"
