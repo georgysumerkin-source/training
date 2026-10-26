@@ -9,26 +9,25 @@ import (
 	"go.openly.dev/pointy"
 )
 
-type status string
+type Status string
 
 type Task struct {
 	Id          string
 	Title       string
 	Description string
-	Status      status
+	Status      Status
 }
 
 func NewTask(
 	Id string,
 	title string,
 	description string,
-	taskStatus status,
 ) (*Task, error) {
 	task := &Task{
 		Id:          Id,
 		Title:       title,
 		Description: description,
-		Status:      taskStatus,
+		Status:      StatusNew,
 	}
 	if err := task.Validate(); err != nil {
 		return nil, err
@@ -46,7 +45,7 @@ func (t *Task) Validate() error {
 		return doValidateError(err, "Title")
 	}
 
-	if err := common.ValidateString(t.Description, pointy.Int(IdMinLen), pointy.Int(IdMaxLen)); err != nil {
+	if err := common.ValidateString(t.Description, pointy.Int(DescriptionMinLen), pointy.Int(DescriptionMaxLen)); err != nil {
 		return doValidateError(err, "Description")
 	}
 
@@ -58,25 +57,29 @@ func (t *Task) Validate() error {
 }
 
 func (t *Task) SetStatus(newStatus string) (*Task, error) {
-	if err := t.validateStatus(status(newStatus)); err != nil {
+	if err := t.validateStatus(Status(newStatus)); err != nil {
 		return nil, doValidateError(err, string(t.Status), newStatus)
 	}
 
-	t.Status = status(newStatus)
+	t.Status = Status(newStatus)
 
 	return t, nil
 }
 
-func (t *Task) validateStatus(curStatus status) error {
+func (t *Task) validateStatus(curStatus Status) error {
+	if _, ok := statusMap[string(t.Status)]; !ok {
+		return doValidateError(internal_errors.ErrInvalidTask, "Status")
+	}
+
 	switch curStatus {
+	case StatusNew:
+		return internal_errors.ErrInvalidTransition
 	case StatusRunning:
 		if t.Status == StatusStopped {
-			return internal_errors.ErrInvalidTask
+			return internal_errors.ErrInvalidTransition
 		}
 	case StatusStopped:
-		if t.Status == StatusNew {
-			return internal_errors.ErrInvalidTask
-		}
+		return internal_errors.ErrInvalidTransition
 	}
 
 	return nil

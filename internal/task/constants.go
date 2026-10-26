@@ -2,8 +2,8 @@ package task
 
 const (
 	StatusNew     = "new"
-	StatusRunning = "running"
-	StatusStopped = "stopped"
+	StatusRunning = "in_progress"
+	StatusStopped = "done"
 )
 
 var statusMap = map[string]interface{}{
