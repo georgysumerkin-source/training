@@ -3,6 +3,7 @@ package task
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/georgysumerkin-source/training/internal/common"
 	"github.com/georgysumerkin-source/training/internal/internal_errors"
@@ -12,21 +13,21 @@ import (
 type Status string
 
 type Task struct {
-	Id          string
+	ID          string
 	Title       string
 	Description string
 	Status      Status
 }
 
 func NewTask(
-	Id string,
+	ID string,
 	title string,
 	description string,
 ) (*Task, error) {
 	task := &Task{
-		Id:          Id,
-		Title:       title,
-		Description: description,
+		ID:          strings.TrimSpace(ID),
+		Title:       strings.TrimSpace(title),
+		Description: strings.TrimSpace(description),
 		Status:      StatusNew,
 	}
 	if err := task.Validate(); err != nil {
@@ -37,7 +38,7 @@ func NewTask(
 }
 
 func (t *Task) Validate() error {
-	if err := common.ValidateString(t.Id, pointy.Int(IdMinLen), pointy.Int(IdMaxLen)); err != nil {
+	if err := common.ValidateString(t.ID, pointy.Int(IdMinLen), pointy.Int(IdMaxLen)); err != nil {
 		return doValidateError(err, "ID")
 	}
 
@@ -66,12 +67,12 @@ func (t *Task) SetStatus(newStatus string) (*Task, error) {
 	return t, nil
 }
 
-func (t *Task) validateStatus(curStatus Status) error {
-	if _, ok := statusMap[string(t.Status)]; !ok {
+func (t *Task) validateStatus(newStatus Status) error {
+	if _, ok := statusMap[string(newStatus)]; !ok {
 		return doValidateError(internal_errors.ErrInvalidTask, "Status")
 	}
 
-	switch curStatus {
+	switch newStatus {
 	case StatusNew:
 		return internal_errors.ErrInvalidTransition
 	case StatusRunning:
@@ -79,7 +80,9 @@ func (t *Task) validateStatus(curStatus Status) error {
 			return internal_errors.ErrInvalidTransition
 		}
 	case StatusStopped:
-		return internal_errors.ErrInvalidTransition
+		if t.Status == StatusNew {
+			return internal_errors.ErrInvalidTransition
+		}
 	}
 
 	return nil
