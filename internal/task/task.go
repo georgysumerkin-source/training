@@ -1,9 +1,11 @@
 package task
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/georgysumerkin-source/training/internal/common"
+	"github.com/georgysumerkin-source/training/internal/internal_errors"
 	"go.openly.dev/pointy"
 )
 
@@ -37,19 +39,19 @@ func NewTask(
 
 func (t *Task) Validate() error {
 	if err := common.ValidateString(t.Id, pointy.Int(IdMinLen), pointy.Int(IdMaxLen)); err != nil {
-		return err
+		return doValidateError(err, "ID")
 	}
 
 	if err := common.ValidateString(t.Title, pointy.Int(TitleMinLen), pointy.Int(TitleMaxLen)); err != nil {
-		return err
+		return doValidateError(err, "Title")
 	}
 
 	if err := common.ValidateString(t.Description, pointy.Int(IdMinLen), pointy.Int(IdMaxLen)); err != nil {
-		return err
+		return doValidateError(err, "Description")
 	}
 
 	if _, ok := statusMap[string(t.Status)]; !ok {
-		return fmt.Errorf("invalid status: %s", t.Status)
+		return doValidateError(internal_errors.ErrInvalidTask, "Status")
 	}
 
 	return nil
@@ -57,7 +59,7 @@ func (t *Task) Validate() error {
 
 func (t *Task) SetStatus(newStatus string) (*Task, error) {
 	if err := t.validateStatus(status(newStatus)); err != nil {
-		return nil, err
+		return nil, doValidateError(err, string(t.Status), newStatus)
 	}
 
 	t.Status = status(newStatus)
@@ -69,13 +71,34 @@ func (t *Task) validateStatus(curStatus status) error {
 	switch curStatus {
 	case StatusRunning:
 		if t.Status == StatusStopped {
-			return fmt.Errorf("task %s is stopped", t.Id)
+			return internal_errors.ErrInvalidTask
 		}
 	case StatusStopped:
 		if t.Status == StatusNew {
-			return fmt.Errorf("task %s is new", t.Id)
+			return internal_errors.ErrInvalidTask
 		}
 	}
 
 	return nil
+}
+
+func doValidateError(err error, fields ...string) error {
+	switch {
+	case errors.Is(err, internal_errors.ErrInvalidTask):
+		if len(fields) > 0 {
+			return fmt.Errorf("invalid task params: %s: %w", fields[0], err)
+		}
+
+		return fmt.Errorf("invalid task params: %w", err)
+
+	case errors.Is(err, internal_errors.ErrInvalidTransition):
+		if len(fields) > 1 {
+			return fmt.Errorf("invalid status transition: %s: %w", fields[1], err)
+		}
+
+		return fmt.Errorf("invalid task transition: %w", err)
+
+	default:
+		return err
+	}
 }
