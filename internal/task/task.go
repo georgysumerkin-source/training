@@ -76,11 +76,11 @@ func (t *Task) validateStatus(newStatus Status) error {
 	case StatusNew:
 		return internal_errors.ErrInvalidTransition
 	case StatusRunning:
-		if t.Status == StatusStopped {
+		if t.Status == StatusStopped || t.Status == StatusRunning {
 			return internal_errors.ErrInvalidTransition
 		}
 	case StatusStopped:
-		if t.Status == StatusNew {
+		if t.Status == StatusNew || t.Status == StatusStopped {
 			return internal_errors.ErrInvalidTransition
 		}
 	}
