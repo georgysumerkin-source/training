@@ -1,13 +1,14 @@
-package task
+package domain
 
 import (
 	"errors"
 	"fmt"
 	"strings"
 
+	"go.openly.dev/pointy"
+
 	"github.com/georgysumerkin-source/training/internal/common"
 	"github.com/georgysumerkin-source/training/internal/internal_errors"
-	"go.openly.dev/pointy"
 )
 
 type Status string
@@ -57,14 +58,13 @@ func (t *Task) Validate() error {
 	return nil
 }
 
-func (t *Task) SetStatus(newStatus string) (*Task, error) {
+func (t *Task) SetStatus(newStatus string) error {
 	if err := t.validateStatus(Status(newStatus)); err != nil {
-		return nil, doValidateError(err, string(t.Status), newStatus)
+		return doValidateError(err, string(t.Status), newStatus)
 	}
-
 	t.Status = Status(newStatus)
 
-	return t, nil
+	return nil
 }
 
 func (t *Task) validateStatus(newStatus Status) error {
