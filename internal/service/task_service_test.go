@@ -3,7 +3,10 @@ package service_test
 import (
 	"context"
 	"errors"
+	"fmt"
+	"sync"
 	"testing"
+	"time"
 
 	"github.com/georgysumerkin-source/training/internal/domain"
 	"github.com/georgysumerkin-source/training/internal/internal_errors"
@@ -13,24 +16,24 @@ import (
 
 // Unconfigured methods panic so unexpected repository calls fail the test.
 type repositoryStub struct {
-	create func(context.Context, domain.Task) error
-	get    func(context.Context, string) (*domain.Task, error)
-	list   func(context.Context) ([]*domain.Task, error)
-	update func(context.Context, domain.Task) error
-	delete func(context.Context, string) error
+	create func(domain.Task) error
+	get    func(string) (*domain.Task, error)
+	list   func() ([]*domain.Task, error)
+	update func(domain.Task) error
+	delete func(string) error
 }
 
-func (r repositoryStub) Create(ctx context.Context, task domain.Task) error {
-	return r.create(ctx, task)
+func (r repositoryStub) Create(task domain.Task) error {
+	return r.create(task)
 }
-func (r repositoryStub) GetByID(ctx context.Context, id string) (*domain.Task, error) {
-	return r.get(ctx, id)
+func (r repositoryStub) GetByID(id string) (*domain.Task, error) {
+	return r.get(id)
 }
-func (r repositoryStub) GetList(ctx context.Context) ([]*domain.Task, error) { return r.list(ctx) }
-func (r repositoryStub) Update(ctx context.Context, task domain.Task) error {
-	return r.update(ctx, task)
+func (r repositoryStub) GetList() ([]*domain.Task, error) { return r.list() }
+func (r repositoryStub) Update(task domain.Task) error {
+	return r.update(task)
 }
-func (r repositoryStub) Delete(ctx context.Context, id string) error { return r.delete(ctx, id) }
+func (r repositoryStub) Delete(id string) error { return r.delete(id) }
 
 func TestTaskServiceLifecycle(t *testing.T) {
 	ctx := context.Background()
@@ -92,37 +95,37 @@ func TestTaskServiceRepositoryErrors(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	failure := errors.New("repository failure")
-	check := func(got context.Context, id string) {
+	check := func(id string) {
 		t.Helper()
-		if got != ctx || id != "id" {
-			t.Fatalf("repository args: %v, %q", got, id)
+		if id != "id" {
+			t.Fatalf("repository id: %q", id)
 		}
 	}
 	for _, operation := range []string{"create", "get", "list", "delete", "status get", "status update"} {
 		t.Run(operation, func(t *testing.T) {
 			calls := 0
-			fail := func(got context.Context, id string) error { check(got, id); calls++; return failure }
+			fail := func(id string) error { check(id); calls++; return failure }
 			r := repositoryStub{}
 			var task *domain.Task
 			var err error
 			switch operation {
 			case "create":
-				r.create = func(ctx context.Context, task domain.Task) error {
+				r.create = func(task domain.Task) error {
 					if task.Title != "title" || task.Description != "description" || task.Status != domain.StatusNew {
 						t.Fatalf("created task: %+v", task)
 					}
-					return fail(ctx, task.ID)
+					return fail(task.ID)
 				}
 				task, err = service.NewTaskService(r).CreateTask(ctx, " id ", " title ", " description ")
 			case "get", "status get":
-				r.get = func(ctx context.Context, id string) (*domain.Task, error) { return nil, fail(ctx, id) }
+				r.get = func(id string) (*domain.Task, error) { return nil, fail(id) }
 				if operation == "get" {
 					task, err = service.NewTaskService(r).GetTask(ctx, "id")
 				} else {
 					task, err = service.NewTaskService(r).ChangeTaskStatus(ctx, "id", domain.StatusRunning)
 				}
 			case "list":
-				r.list = func(ctx context.Context) ([]*domain.Task, error) { return nil, fail(ctx, "id") }
+				r.list = func() ([]*domain.Task, error) { return nil, fail("id") }
 				list, listErr := service.NewTaskService(r).GetTaskList(ctx)
 				err = listErr
 				if list != nil {
@@ -132,15 +135,15 @@ func TestTaskServiceRepositoryErrors(t *testing.T) {
 				r.delete = fail
 				err = service.NewTaskService(r).DeleteTask(ctx, "id")
 			case "status update":
-				r.get = func(ctx context.Context, id string) (*domain.Task, error) {
-					check(ctx, id)
+				r.get = func(id string) (*domain.Task, error) {
+					check(id)
 					return &domain.Task{ID: id, Title: "title", Status: domain.StatusNew}, nil
 				}
-				r.update = func(ctx context.Context, task domain.Task) error {
+				r.update = func(task domain.Task) error {
 					if task.Status != domain.StatusRunning || task.Title != "title" {
 						t.Fatalf("updated task: %+v", task)
 					}
-					return fail(ctx, task.ID)
+					return fail(task.ID)
 				}
 				task, err = service.NewTaskService(r).ChangeTaskStatus(ctx, "id", domain.StatusRunning)
 			}
@@ -156,7 +159,7 @@ func TestChangeTaskStatusRejectsWithoutUpdate(t *testing.T) {
 		t.Run(status, func(t *testing.T) {
 			original := domain.Task{ID: "id", Title: "title", Status: domain.StatusNew}
 			task := original
-			r := repositoryStub{get: func(context.Context, string) (*domain.Task, error) { return &task, nil }}
+			r := repositoryStub{get: func(string) (*domain.Task, error) { return &task, nil }}
 			got, err := service.NewTaskService(r).ChangeTaskStatus(context.Background(), "id", status)
 			want := internal_errors.ErrInvalidTransition
 			if status == "unknown" {
@@ -166,5 +169,134 @@ func TestChangeTaskStatusRejectsWithoutUpdate(t *testing.T) {
 				t.Fatalf("rejected change: %v, %v; task %+v", got, err, task)
 			}
 		})
+	}
+}
+
+func TestTaskServiceContext(t *testing.T) {
+	for _, expired := range []bool{false, true} {
+		t.Run(fmt.Sprintf("expired=%t", expired), func(t *testing.T) {
+			ctx, cancel := context.WithCancel(context.Background())
+			want := context.Canceled
+			if expired {
+				cancel()
+				ctx, cancel = context.WithDeadline(context.Background(), time.Now().Add(-time.Second))
+				want = context.DeadlineExceeded
+			} else {
+				cancel()
+			}
+			defer cancel()
+			// No repository method may be called with an already canceled context.
+			s := service.NewTaskService(repositoryStub{})
+			for _, operation := range []struct {
+				name string
+				run  func() error
+			}{
+				{"create", func() error {
+					task, err := s.CreateTask(ctx, "id", "title", "")
+					if task != nil {
+						t.Error("create returned task")
+					}
+					return err
+				}},
+				{"get", func() error {
+					task, err := s.GetTask(ctx, "id")
+					if task != nil {
+						t.Error("get returned task")
+					}
+					return err
+				}},
+				{"list", func() error {
+					list, err := s.GetTaskList(ctx)
+					if list != nil {
+						t.Error("list returned tasks")
+					}
+					return err
+				}},
+				{"delete", func() error { return s.DeleteTask(ctx, "id") }},
+				{"status", func() error {
+					task, err := s.ChangeTaskStatus(ctx, "id", domain.StatusRunning)
+					if task != nil {
+						t.Error("status returned task")
+					}
+					return err
+				}},
+			} {
+				if err := operation.run(); !errors.Is(err, want) {
+					t.Errorf("%s: error = %v, want %v", operation.name, err, want)
+				}
+			}
+		})
+	}
+}
+
+func TestTaskServiceConcurrentAccess(t *testing.T) {
+	s := service.NewTaskService(repository.NewMemoryRepository())
+	ctx := context.Background()
+	var wg sync.WaitGroup
+	for i := 0; i < 32; i++ {
+		wg.Go(func() {
+			id := fmt.Sprint(i)
+			if _, err := s.CreateTask(ctx, id, "title", ""); err != nil {
+				t.Error(err)
+				return
+			}
+			changed, err := s.ChangeTaskStatus(ctx, id, domain.StatusRunning)
+			if err != nil {
+				t.Error(err)
+				return
+			}
+			got, err := s.GetTask(ctx, id)
+			if err != nil || got == nil || changed == nil || *got != *changed {
+				t.Errorf("get: %+v, %v; want %+v", got, err, changed)
+			}
+			if _, err := s.GetTaskList(ctx); err != nil {
+				t.Error(err)
+			}
+			if err := s.DeleteTask(ctx, id); err != nil {
+				t.Error(err)
+			}
+		})
+	}
+	wg.Wait()
+	list, err := s.GetTaskList(ctx)
+	if err != nil || len(list) != 0 {
+		t.Fatalf("remaining tasks: %v, %v", list, err)
+	}
+}
+
+func TestConcurrentStatusChange(t *testing.T) {
+	s := service.NewTaskService(repository.NewMemoryRepository())
+	ctx := context.Background()
+	if _, err := s.CreateTask(ctx, "id", "title", ""); err != nil {
+		t.Fatal(err)
+	}
+	const workers = 32
+	start := make(chan struct{})
+	results := make(chan error, workers)
+	var wg sync.WaitGroup
+	for i := 0; i < workers; i++ {
+		wg.Go(func() {
+			<-start
+			_, err := s.ChangeTaskStatus(ctx, "id", domain.StatusRunning)
+			results <- err
+		})
+	}
+	close(start)
+	wg.Wait()
+	close(results)
+	successes := 0
+	for err := range results {
+		if err == nil {
+			successes++
+		} else if !errors.Is(err, internal_errors.ErrInvalidTransition) {
+			t.Errorf("unexpected error: %v", err)
+		}
+	}
+	if successes != 1 {
+		t.Fatalf("successful transitions = %d, want 1", successes)
+	}
+	task, err := s.GetTask(ctx, "id")
+	if err != nil || task == nil || task.Status != domain.StatusRunning {
+		t.Fatalf("final task: %+v, %v", task, err)
 	}
 }

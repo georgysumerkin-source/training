@@ -1,7 +1,6 @@
 package repository
 
 import (
-	"context"
 	"sync"
 
 	"github.com/georgysumerkin-source/training/internal/domain"
@@ -21,13 +20,7 @@ func NewMemoryRepository() *MemoryRepository {
 
 //var _ TaskRepository = (*MemoryRepository)(nil)
 
-func (r *MemoryRepository) Create(ctx context.Context, task domain.Task) error {
-	if err := ctx.Err(); err != nil {
-		return err
-	}
-	r.locker.Lock()
-	defer r.locker.Unlock()
-
+func (r *MemoryRepository) Create(task domain.Task) error {
 	if _, exist := r.storage[task.ID]; exist {
 		return ErrTaskAlreadyExists
 	}
@@ -36,13 +29,7 @@ func (r *MemoryRepository) Create(ctx context.Context, task domain.Task) error {
 	return nil
 }
 
-func (r *MemoryRepository) Update(ctx context.Context, task domain.Task) error {
-	if err := ctx.Err(); err != nil {
-		return err
-	}
-	r.locker.Lock()
-	defer r.locker.Unlock()
-
+func (r *MemoryRepository) Update(task domain.Task) error {
 	if _, exist := r.storage[task.ID]; !exist {
 		return ErrTaskNotFound
 	}
@@ -51,13 +38,7 @@ func (r *MemoryRepository) Update(ctx context.Context, task domain.Task) error {
 	return nil
 }
 
-func (r *MemoryRepository) Delete(ctx context.Context, taskID string) error {
-	if err := ctx.Err(); err != nil {
-		return err
-	}
-	r.locker.Lock()
-	defer r.locker.Unlock()
-
+func (r *MemoryRepository) Delete(taskID string) error {
 	if _, exist := r.storage[taskID]; !exist {
 		return ErrTaskNotFound
 	}
@@ -66,13 +47,7 @@ func (r *MemoryRepository) Delete(ctx context.Context, taskID string) error {
 	return nil
 }
 
-func (r *MemoryRepository) GetByID(ctx context.Context, taskID string) (*domain.Task, error) {
-	if err := ctx.Err(); err != nil {
-		return nil, err
-	}
-	r.locker.RLock()
-	defer r.locker.RUnlock()
-
+func (r *MemoryRepository) GetByID(taskID string) (*domain.Task, error) {
 	taskData, exist := r.storage[taskID]
 	if !exist {
 		return nil, ErrTaskNotFound
@@ -81,16 +56,11 @@ func (r *MemoryRepository) GetByID(ctx context.Context, taskID string) (*domain.
 	return &taskData, nil
 }
 
-func (r *MemoryRepository) GetList(ctx context.Context) ([]*domain.Task, error) {
-	if err := ctx.Err(); err != nil {
-		return nil, err
-	}
-	r.locker.RLock()
-	defer r.locker.RUnlock()
-
+func (r *MemoryRepository) GetList() ([]*domain.Task, error) {
 	tasks := make([]*domain.Task, 0, len(r.storage))
 	for _, taskData := range r.storage {
 		tasks = append(tasks, &taskData)
 	}
+
 	return tasks, nil
 }
