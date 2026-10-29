@@ -77,7 +77,7 @@ type TaskMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
 func (m TaskMultiError) Error() string {
-	var msgs []string
+	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
 	}
@@ -183,7 +183,7 @@ type CreateTaskReqMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
 func (m CreateTaskReqMultiError) Error() string {
-	var msgs []string
+	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
 	}
@@ -284,7 +284,7 @@ type GetTaskReqMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
 func (m GetTaskReqMultiError) Error() string {
-	var msgs []string
+	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
 	}
@@ -384,7 +384,7 @@ type GetTaskListReqMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
 func (m GetTaskListReqMultiError) Error() string {
-	var msgs []string
+	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
 	}
@@ -518,7 +518,7 @@ type GetTaskListResMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
 func (m GetTaskListResMultiError) Error() string {
-	var msgs []string
+	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
 	}
@@ -622,7 +622,7 @@ type StatusChangeReqMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
 func (m StatusChangeReqMultiError) Error() string {
-	var msgs []string
+	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
 	}
@@ -724,7 +724,7 @@ type DeleteTaskReqMultiError []error
 
 // Error returns a concatenation of all the error messages it wraps.
 func (m DeleteTaskReqMultiError) Error() string {
-	var msgs []string
+	msgs := make([]string, 0, len(m))
 	for _, err := range m {
 		msgs = append(msgs, err.Error())
 	}
