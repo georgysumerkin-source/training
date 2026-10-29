@@ -73,3 +73,28 @@ func TestMemoryRepositoryCRUD(t *testing.T) {
 		t.Fatalf("remaining tasks: %v, %v", list, err)
 	}
 }
+
+func TestMemoryRepositoryGetLocker(t *testing.T) {
+	r := repository.NewMemoryRepository()
+	locker := r.GetLocker()
+	if locker == nil {
+		t.Fatal("nil mutex")
+	}
+	if r.GetLocker() != locker {
+		t.Fatal("GetLocker must return the same mutex")
+	}
+	other := repository.NewMemoryRepository()
+	if other.GetLocker() == locker {
+		t.Fatal("independent repositories share a mutex")
+	}
+	locker.Lock()
+	defer locker.Unlock()
+	if r.GetLocker().TryRLock() {
+		r.GetLocker().RUnlock()
+		t.Fatal("GetLocker returned an unlocked mutex")
+	}
+	if !other.GetLocker().TryLock() {
+		t.Fatal("independent repository is blocked")
+	}
+	other.GetLocker().Unlock()
+}

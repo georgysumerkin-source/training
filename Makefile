@@ -10,6 +10,7 @@ PROTO_PATH = gen
 PROTO_VAL_VER = v1.2.1
 GRPC_GW_VER = v2.26.1
 PROTOC_GEN_GO_VER = v1.35.1
+PROTOC_GEN_GO_GRPC_VER = v1.5.1
 
 docker-build:
 	docker build -t $(IMAGE_NAME):$(IMAGE_TAG) .
@@ -20,6 +21,14 @@ docker-run:
 docker-compose:
 	IMAGE_NAME=$(IMAGE_NAME) IMAGE_TAG=$(IMAGE_TAG) SERVICE_PORT=$(SERVICE_PORT)\
  	LISTEN_PORT=$(LISTEN_PORT) COMPOSE_HOST=$(COMPOSE_HOST) docker compose up -d
+
+install:
+	go install github.com/envoyproxy/protoc-gen-validate@${PROTO_VAL_VER} \
+    && go install google.golang.org/protobuf/cmd/protoc-gen-go@${PROTOC_GEN_GO_VER} \
+    && go install \
+			 github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@${GRPC_GW_VER} \
+			 github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2@${GRPC_GW_VER} \
+    && go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@${PROTOC_GEN_GO_GRPC_VER} \
 
 proto-gen:
 	@rm -rf ${PROTO_PATH}

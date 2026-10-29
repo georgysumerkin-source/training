@@ -16,6 +16,7 @@ import (
 
 // Unconfigured methods panic so unexpected repository calls fail the test.
 type repositoryStub struct {
+	locker sync.RWMutex
 	create func(domain.Task) error
 	get    func(string) (*domain.Task, error)
 	list   func() ([]*domain.Task, error)
@@ -23,17 +24,21 @@ type repositoryStub struct {
 	delete func(string) error
 }
 
-func (r repositoryStub) Create(task domain.Task) error {
+func (r *repositoryStub) Create(task domain.Task) error {
 	return r.create(task)
 }
-func (r repositoryStub) GetByID(id string) (*domain.Task, error) {
+func (r *repositoryStub) GetByID(id string) (*domain.Task, error) {
 	return r.get(id)
 }
-func (r repositoryStub) GetList() ([]*domain.Task, error) { return r.list() }
-func (r repositoryStub) Update(task domain.Task) error {
+func (r *repositoryStub) GetList() ([]*domain.Task, error) { return r.list() }
+func (r *repositoryStub) Update(task domain.Task) error {
 	return r.update(task)
 }
-func (r repositoryStub) Delete(id string) error { return r.delete(id) }
+func (r *repositoryStub) Delete(id string) error { return r.delete(id) }
+
+func (r *repositoryStub) GetLocker() *sync.RWMutex { return &r.locker }
+
+var _ repository.TaskRepository = (*repositoryStub)(nil)
 
 func TestTaskServiceLifecycle(t *testing.T) {
 	ctx := context.Background()
@@ -82,7 +87,7 @@ func TestTaskServiceLifecycle(t *testing.T) {
 }
 
 func TestCreateTaskValidation(t *testing.T) {
-	s := service.NewTaskService(repositoryStub{})
+	s := service.NewTaskService(&repositoryStub{})
 	for _, tt := range []struct{ id, title string }{{"", "title"}, {"id", "  "}} {
 		task, err := s.CreateTask(context.Background(), tt.id, tt.title, "")
 		if task != nil || !errors.Is(err, internal_errors.ErrInvalidTask) {
@@ -116,24 +121,24 @@ func TestTaskServiceRepositoryErrors(t *testing.T) {
 					}
 					return fail(task.ID)
 				}
-				task, err = service.NewTaskService(r).CreateTask(ctx, " id ", " title ", " description ")
+				task, err = service.NewTaskService(&r).CreateTask(ctx, " id ", " title ", " description ")
 			case "get", "status get":
 				r.get = func(id string) (*domain.Task, error) { return nil, fail(id) }
 				if operation == "get" {
-					task, err = service.NewTaskService(r).GetTask(ctx, "id")
+					task, err = service.NewTaskService(&r).GetTask(ctx, "id")
 				} else {
-					task, err = service.NewTaskService(r).ChangeTaskStatus(ctx, "id", domain.StatusRunning)
+					task, err = service.NewTaskService(&r).ChangeTaskStatus(ctx, "id", domain.StatusRunning)
 				}
 			case "list":
 				r.list = func() ([]*domain.Task, error) { return nil, fail("id") }
-				list, listErr := service.NewTaskService(r).GetTaskList(ctx)
+				list, listErr := service.NewTaskService(&r).GetTaskList(ctx)
 				err = listErr
 				if list != nil {
 					t.Fatalf("list on error: %v", list)
 				}
 			case "delete":
 				r.delete = fail
-				err = service.NewTaskService(r).DeleteTask(ctx, "id")
+				err = service.NewTaskService(&r).DeleteTask(ctx, "id")
 			case "status update":
 				r.get = func(id string) (*domain.Task, error) {
 					check(id)
@@ -145,8 +150,12 @@ func TestTaskServiceRepositoryErrors(t *testing.T) {
 					}
 					return fail(task.ID)
 				}
-				task, err = service.NewTaskService(r).ChangeTaskStatus(ctx, "id", domain.StatusRunning)
+				task, err = service.NewTaskService(&r).ChangeTaskStatus(ctx, "id", domain.StatusRunning)
 			}
+			if !r.locker.TryLock() {
+				t.Fatal("repository lock not released after error")
+			}
+			r.locker.Unlock()
 			if task != nil || !errors.Is(err, failure) || calls != 1 {
 				t.Fatalf("result: %v, %v; repository calls %d", task, err, calls)
 			}
@@ -160,7 +169,7 @@ func TestChangeTaskStatusRejectsWithoutUpdate(t *testing.T) {
 			original := domain.Task{ID: "id", Title: "title", Status: domain.StatusNew}
 			task := original
 			r := repositoryStub{get: func(string) (*domain.Task, error) { return &task, nil }}
-			got, err := service.NewTaskService(r).ChangeTaskStatus(context.Background(), "id", status)
+			got, err := service.NewTaskService(&r).ChangeTaskStatus(context.Background(), "id", status)
 			want := internal_errors.ErrInvalidTransition
 			if status == "unknown" {
 				want = internal_errors.ErrInvalidTask
@@ -185,8 +194,8 @@ func TestTaskServiceContext(t *testing.T) {
 				cancel()
 			}
 			defer cancel()
-			// No repository method may be called with an already canceled context.
-			s := service.NewTaskService(repositoryStub{})
+			// GetLocker is allowed, but no data operation may run with a canceled context.
+			s := service.NewTaskService(&repositoryStub{})
 			for _, operation := range []struct {
 				name string
 				run  func() error
@@ -230,11 +239,13 @@ func TestTaskServiceContext(t *testing.T) {
 }
 
 func TestTaskServiceConcurrentAccess(t *testing.T) {
-	s := service.NewTaskService(repository.NewMemoryRepository())
+	r := repository.NewMemoryRepository()
+	s := service.NewTaskService(r)
 	ctx := context.Background()
 	var wg sync.WaitGroup
 	for i := 0; i < 32; i++ {
 		wg.Go(func() {
+			s := service.NewTaskService(r)
 			id := fmt.Sprint(i)
 			if _, err := s.CreateTask(ctx, id, "title", ""); err != nil {
 				t.Error(err)
@@ -265,7 +276,8 @@ func TestTaskServiceConcurrentAccess(t *testing.T) {
 }
 
 func TestConcurrentStatusChange(t *testing.T) {
-	s := service.NewTaskService(repository.NewMemoryRepository())
+	r := repository.NewMemoryRepository()
+	s := service.NewTaskService(r)
 	ctx := context.Background()
 	if _, err := s.CreateTask(ctx, "id", "title", ""); err != nil {
 		t.Fatal(err)
@@ -276,6 +288,7 @@ func TestConcurrentStatusChange(t *testing.T) {
 	var wg sync.WaitGroup
 	for i := 0; i < workers; i++ {
 		wg.Go(func() {
+			s := service.NewTaskService(r)
 			<-start
 			_, err := s.ChangeTaskStatus(ctx, "id", domain.StatusRunning)
 			results <- err
@@ -298,5 +311,67 @@ func TestConcurrentStatusChange(t *testing.T) {
 	task, err := s.GetTask(ctx, "id")
 	if err != nil || task == nil || task.Status != domain.StatusRunning {
 		t.Fatalf("final task: %+v, %v", task, err)
+	}
+}
+
+func TestTaskServiceUsesRepositoryLock(t *testing.T) {
+	for _, operation := range []string{"create", "get", "list", "delete", "status"} {
+		t.Run(operation, func(t *testing.T) {
+			r := &repositoryStub{}
+			calls := 0
+			checkLock := func() {
+				t.Helper()
+				calls++
+				if r.locker.TryLock() {
+					r.locker.Unlock()
+					t.Fatal("repository mutex is not held")
+				}
+				readLocked := r.locker.TryRLock()
+				if readLocked {
+					r.locker.RUnlock()
+				}
+				wantRead := operation == "get" || operation == "list"
+				if readLocked != wantRead {
+					t.Fatalf("read lock = %t, want %t", readLocked, wantRead)
+				}
+			}
+			r.create = func(domain.Task) error { checkLock(); return nil }
+			r.get = func(id string) (*domain.Task, error) {
+				checkLock()
+				return &domain.Task{ID: id, Title: "title", Status: domain.StatusNew}, nil
+			}
+			r.list = func() ([]*domain.Task, error) { checkLock(); return nil, nil }
+			r.delete = func(string) error { checkLock(); return nil }
+			r.update = func(domain.Task) error { checkLock(); return nil }
+			s := service.NewTaskService(r)
+			ctx := context.Background()
+			var err error
+			switch operation {
+			case "create":
+				_, err = s.CreateTask(ctx, "id", "title", "")
+			case "get":
+				_, err = s.GetTask(ctx, "id")
+			case "list":
+				_, err = s.GetTaskList(ctx)
+			case "delete":
+				err = s.DeleteTask(ctx, "id")
+			case "status":
+				_, err = s.ChangeTaskStatus(ctx, "id", domain.StatusRunning)
+			}
+			if err != nil {
+				t.Fatal(err)
+			}
+			wantCalls := 1
+			if operation == "status" {
+				wantCalls = 2
+			}
+			if calls != wantCalls {
+				t.Fatalf("calls = %d, want %d", calls, wantCalls)
+			}
+			if !r.locker.TryLock() {
+				t.Fatal("repository mutex not released")
+			}
+			r.locker.Unlock()
+		})
 	}
 }
