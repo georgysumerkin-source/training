@@ -1,0 +1,43 @@
+syntax = "proto3";
+package task;
+option go_package = "github.com/georgysumerkin-source/training/gen/go";
+
+message Task {
+  string id = 1;
+  string title = 2;
+  string description = 3;
+  TaskStatus status = 4;
+}
+
+enum TaskStatus {
+  TASK_STATUS_UNSPECIFIED = 0;
+  TASK_STATUS_NEW = 1;
+  TASK_STATUS_IN_PROGRESS = 2;
+  TASK_STATUS_DONE = 3;
+}
+
+message CreateTaskReq {
+  string id = 1;
+  string title = 2;
+  string description = 3;
+}
+
+message GetTaskReq {
+  string id = 1;
+}
+
+message GetTaskListReq {
+}
+
+message GetTaskListRes {
+  repeated Task tasks = 1;
+}
+
+message StatusChangeReq {
+  string id = 1;
+  TaskStatus status = 2;
+}
+
+message DeleteTaskReq {
+  string id = 1;
+}

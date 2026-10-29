@@ -1,0 +1,76 @@
+syntax = "proto3";
+
+package task_service;
+option go_package = "github.com/georgysumerkin-source/training/gen/go";
+
+import "task.proto";
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
+
+option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
+  info: {
+    title: "AMS Server";
+    version: "1.0.0";
+    description: "Advertising management service";
+  };
+  schemes: HTTP;
+  consumes: "application/json";
+  produces: "application/json";
+};
+
+service task_service {
+  rpc CreateTask(task.CreateTaskReq) returns (task.Task) {
+    option (google.api.http) = {
+      post: "/api/v1/task"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      tags: "task"
+      description: "create new task"
+    };
+  }
+
+  rpc GetTask(task.GetTaskReq) returns (task.Task) {
+    option (google.api.http) = {
+      get: "/api/v1/task/{id}"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      tags: "task"
+      description: "get task"
+    };
+  }
+
+  rpc GetTaskList(task.GetTaskListReq) returns (task.GetTaskListRes) {
+    option (google.api.http) = {
+      get: "/api/v1/task"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      tags: "task"
+      description: "get task list"
+    };
+  }
+
+  rpc ChangeTaskStatus(task.StatusChangeReq) returns (task.Task) {
+    option (google.api.http) = {
+      patch: "/api/v1/task/{id}"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      tags: "task"
+      description: "edit task status"
+    };
+  }
+
+  rpc DeleteTask(task.DeleteTaskReq) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      delete: "/api/v1/task/{id}"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      tags: "task"
+      description: "edit task status"
+    };
+  }
+
+}

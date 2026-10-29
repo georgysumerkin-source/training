@@ -64,3 +64,6 @@ func (r *MemoryRepository) GetList() ([]*domain.Task, error) {
 
 	return tasks, nil
 }
+func (r *MemoryRepository) GetLocker() *sync.RWMutex {
+	return &r.locker
+}

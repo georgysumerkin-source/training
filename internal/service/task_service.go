@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"sync"
 
 	"github.com/georgysumerkin-source/training/internal/common"
 	"github.com/georgysumerkin-source/training/internal/domain"
@@ -11,7 +10,6 @@ import (
 
 type TaskService struct {
 	taskRepository repository.TaskRepository
-	locker         sync.RWMutex
 }
 
 func NewTaskService(taskRepository repository.TaskRepository) *TaskService {
@@ -32,8 +30,8 @@ func (s *TaskService) CreateTask(ctx context.Context, id, title, description str
 
 		return taskData, nil
 	}
-
-	taskData, err := common.WithLockResult(ctx, &s.locker, fn)
+	locker := s.taskRepository.GetLocker()
+	taskData, err := common.WithLockResult(ctx, locker, fn)
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +48,8 @@ func (s *TaskService) GetTask(ctx context.Context, id string) (*domain.Task, err
 
 		return taskData, nil
 	}
-	taskData, err := common.WithLockResult(ctx, s.locker.RLocker(), fn)
+	locker := s.taskRepository.GetLocker()
+	taskData, err := common.WithLockResult(ctx, locker.RLocker(), fn)
 	if err != nil {
 		return nil, err
 	}
@@ -67,7 +66,8 @@ func (s *TaskService) GetTaskList(ctx context.Context) ([]*domain.Task, error) {
 
 		return taskData, nil
 	}
-	taskData, err := common.WithLockResult(ctx, s.locker.RLocker(), fn)
+	locker := s.taskRepository.GetLocker()
+	taskData, err := common.WithLockResult(ctx, locker.RLocker(), fn)
 	if err != nil {
 		return nil, err
 	}
@@ -79,8 +79,9 @@ func (s *TaskService) DeleteTask(ctx context.Context, id string) error {
 	fn := func() error {
 		return s.taskRepository.Delete(id)
 	}
+	locker := s.taskRepository.GetLocker()
 
-	return common.WithLock(ctx, &s.locker, fn)
+	return common.WithLock(ctx, locker, fn)
 }
 
 func (s *TaskService) ChangeTaskStatus(ctx context.Context, id string, status string) (*domain.Task, error) {
@@ -99,7 +100,8 @@ func (s *TaskService) ChangeTaskStatus(ctx context.Context, id string, status st
 		return taskData, nil
 	}
 
-	taskData, err := common.WithLockResult(ctx, &s.locker, fn)
+	locker := s.taskRepository.GetLocker()
+	taskData, err := common.WithLockResult(ctx, locker, fn)
 	if err != nil {
 		return nil, err
 	}

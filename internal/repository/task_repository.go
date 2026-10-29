@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"sync"
+
 	"github.com/georgysumerkin-source/training/internal/domain"
 )
 
@@ -10,4 +12,5 @@ type TaskRepository interface {
 	GetList() ([]*domain.Task, error)
 	Update(domain.Task) error
 	Delete(string) error
+	GetLocker() *sync.RWMutex
 }

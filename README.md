@@ -5,3 +5,5 @@ Technologies that being studied:
 2) EKS
 3) MongoDB
 4) Kafka
+
+"make proto-gen" call takes messages and contracts from "api" directory and generates go network interfaces

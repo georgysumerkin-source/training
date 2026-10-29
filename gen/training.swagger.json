@@ -1,0 +1,278 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "AMS Server",
+    "description": "Advertising management service",
+    "version": "1.0.0"
+  },
+  "tags": [
+    {
+      "name": "task_service"
+    }
+  ],
+  "schemes": [
+    "http"
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/api/v1/task": {
+      "get": {
+        "description": "get task list",
+        "operationId": "task_service_GetTaskList",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/taskGetTaskListRes"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "task"
+        ]
+      },
+      "post": {
+        "description": "create new task",
+        "operationId": "task_service_CreateTask",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/taskTask"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/taskCreateTaskReq"
+            }
+          }
+        ],
+        "tags": [
+          "task"
+        ]
+      }
+    },
+    "/api/v1/task/{id}": {
+      "get": {
+        "description": "get task",
+        "operationId": "task_service_GetTask",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/taskTask"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "task"
+        ]
+      },
+      "delete": {
+        "description": "edit task status",
+        "operationId": "task_service_DeleteTask",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {}
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/task_serviceDeleteTaskBody"
+            }
+          }
+        ],
+        "tags": [
+          "task"
+        ]
+      },
+      "patch": {
+        "description": "edit task status",
+        "operationId": "task_service_ChangeTaskStatus",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/taskTask"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/task_serviceChangeTaskStatusBody"
+            }
+          }
+        ],
+        "tags": [
+          "task"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "taskCreateTaskReq": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    },
+    "taskGetTaskListRes": {
+      "type": "object",
+      "properties": {
+        "tasks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/taskTask"
+          }
+        }
+      }
+    },
+    "taskTask": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/definitions/taskTaskStatus"
+        }
+      }
+    },
+    "taskTaskStatus": {
+      "type": "string",
+      "enum": [
+        "TASK_STATUS_UNSPECIFIED",
+        "TASK_STATUS_NEW",
+        "TASK_STATUS_IN_PROGRESS",
+        "TASK_STATUS_DONE"
+      ],
+      "default": "TASK_STATUS_UNSPECIFIED"
+    },
+    "task_serviceChangeTaskStatusBody": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "$ref": "#/definitions/taskTaskStatus"
+        }
+      }
+    },
+    "task_serviceDeleteTaskBody": {
+      "type": "object"
+    }
+  }
+}
