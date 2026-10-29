@@ -28,8 +28,8 @@ var File_task_service_proto protoreflect.FileDescriptor
 const file_task_service_proto_rawDesc = "" +
 	"\n" +
 	"\x12task_service.proto\x12\ftask_service\x1a\n" +
-	"task.proto\x1a\x1cgoogle/api/annotations.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a.protoc-gen-openapiv2/options/annotations.proto2\x8f\x04\n" +
-	"\ftask_service\x12`\n" +
+	"task.proto\x1a\x1cgoogle/api/annotations.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a.protoc-gen-openapiv2/options/annotations.proto2\x8e\x04\n" +
+	"\vTaskService\x12`\n" +
 	"\n" +
 	"CreateTask\x12\x13.task.CreateTaskReq\x1a\n" +
 	".task.Task\"1\x92A\x17\n" +
@@ -44,8 +44,8 @@ const file_task_service_proto_rawDesc = "" +
 	"\x04task\x1a\x10edit task status\x82\xd3\xe4\x93\x02\x16:\x01*2\x11/api/v1/task/{id}\x12m\n" +
 	"\n" +
 	"DeleteTask\x12\x13.task.DeleteTaskReq\x1a\x16.google.protobuf.Empty\"2\x92A\x13\n" +
-	"\x04task\x1a\vdelete task\x82\xd3\xe4\x93\x02\x16:\x01**\x11/api/v1/task/{id}B\x90\x01\x92A^\x125\n" +
-	"\fTask Service\x12\x1eAdvertising management service2\x051.0.0*\x01\x012\x10application/json:\x10application/jsonZ-github.com/georgysumerkin-source/training/genb\x06proto3"
+	"\x04task\x1a\vdelete task\x82\xd3\xe4\x93\x02\x16:\x01**\x11/api/v1/task/{id}B\x89\x01\x92AW\x12.\n" +
+	"\fTask Service\x12\x17Task management service2\x051.0.0*\x01\x012\x10application/json:\x10application/jsonZ-github.com/georgysumerkin-source/training/genb\x06proto3"
 
 var file_task_service_proto_goTypes = []any{
 	(*CreateTaskReq)(nil),   // 0: task.CreateTaskReq
@@ -58,16 +58,16 @@ var file_task_service_proto_goTypes = []any{
 	(*emptypb.Empty)(nil),   // 7: google.protobuf.Empty
 }
 var file_task_service_proto_depIdxs = []int32{
-	0, // 0: task_service.task_service.CreateTask:input_type -> task.CreateTaskReq
-	1, // 1: task_service.task_service.GetTask:input_type -> task.GetTaskReq
-	2, // 2: task_service.task_service.GetTaskList:input_type -> task.GetTaskListReq
-	3, // 3: task_service.task_service.ChangeTaskStatus:input_type -> task.StatusChangeReq
-	4, // 4: task_service.task_service.DeleteTask:input_type -> task.DeleteTaskReq
-	5, // 5: task_service.task_service.CreateTask:output_type -> task.Task
-	5, // 6: task_service.task_service.GetTask:output_type -> task.Task
-	6, // 7: task_service.task_service.GetTaskList:output_type -> task.GetTaskListRes
-	5, // 8: task_service.task_service.ChangeTaskStatus:output_type -> task.Task
-	7, // 9: task_service.task_service.DeleteTask:output_type -> google.protobuf.Empty
+	0, // 0: task_service.TaskService.CreateTask:input_type -> task.CreateTaskReq
+	1, // 1: task_service.TaskService.GetTask:input_type -> task.GetTaskReq
+	2, // 2: task_service.TaskService.GetTaskList:input_type -> task.GetTaskListReq
+	3, // 3: task_service.TaskService.ChangeTaskStatus:input_type -> task.StatusChangeReq
+	4, // 4: task_service.TaskService.DeleteTask:input_type -> task.DeleteTaskReq
+	5, // 5: task_service.TaskService.CreateTask:output_type -> task.Task
+	5, // 6: task_service.TaskService.GetTask:output_type -> task.Task
+	6, // 7: task_service.TaskService.GetTaskList:output_type -> task.GetTaskListRes
+	5, // 8: task_service.TaskService.ChangeTaskStatus:output_type -> task.Task
+	7, // 9: task_service.TaskService.DeleteTask:output_type -> google.protobuf.Empty
 	5, // [5:10] is the sub-list for method output_type
 	0, // [0:5] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
