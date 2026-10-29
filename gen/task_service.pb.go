@@ -44,9 +44,8 @@ const file_task_service_proto_rawDesc = "" +
 	"\x04task\x1a\x10edit task status\x82\xd3\xe4\x93\x02\x16:\x01*2\x11/api/v1/task/{id}\x12r\n" +
 	"\n" +
 	"DeleteTask\x12\x13.task.DeleteTaskReq\x1a\x16.google.protobuf.Empty\"7\x92A\x18\n" +
-	"\x04task\x1a\x10edit task status\x82\xd3\xe4\x93\x02\x16:\x01**\x11/api/v1/task/{id}B\x8e\x01\x92A\\\x123\n" +
-	"\n" +
-	"AMS Server\x12\x1eAdvertising management service2\x051.0.0*\x01\x012\x10application/json:\x10application/jsonZ-github.com/georgysumerkin-source/training/genb\x06proto3"
+	"\x04task\x1a\x10edit task status\x82\xd3\xe4\x93\x02\x16:\x01**\x11/api/v1/task/{id}B\x90\x01\x92A^\x125\n" +
+	"\fTask Service\x12\x1eAdvertising management service2\x051.0.0*\x01\x012\x10application/json:\x10application/jsonZ-github.com/georgysumerkin-source/training/genb\x06proto3"
 
 var file_task_service_proto_goTypes = []any{
 	(*CreateTaskReq)(nil),   // 0: task.CreateTaskReq

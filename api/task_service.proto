@@ -10,7 +10,7 @@ import "protoc-gen-openapiv2/options/annotations.proto";
 
 option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
   info: {
-    title: "AMS Server";
+    title: "Task Service";
     version: "1.0.0";
     description: "Advertising management service";
   };
