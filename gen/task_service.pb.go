@@ -28,7 +28,7 @@ var File_task_service_proto protoreflect.FileDescriptor
 const file_task_service_proto_rawDesc = "" +
 	"\n" +
 	"\x12task_service.proto\x12\ftask_service\x1a\n" +
-	"task.proto\x1a\x1cgoogle/api/annotations.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a.protoc-gen-openapiv2/options/annotations.proto2\x94\x04\n" +
+	"task.proto\x1a\x1cgoogle/api/annotations.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a.protoc-gen-openapiv2/options/annotations.proto2\x8f\x04\n" +
 	"\ftask_service\x12`\n" +
 	"\n" +
 	"CreateTask\x12\x13.task.CreateTaskReq\x1a\n" +
@@ -41,10 +41,10 @@ const file_task_service_proto_rawDesc = "" +
 	"\x04task\x1a\rget task list\x82\xd3\xe4\x93\x02\x0e\x12\f/api/v1/task\x12n\n" +
 	"\x10ChangeTaskStatus\x12\x15.task.StatusChangeReq\x1a\n" +
 	".task.Task\"7\x92A\x18\n" +
-	"\x04task\x1a\x10edit task status\x82\xd3\xe4\x93\x02\x16:\x01*2\x11/api/v1/task/{id}\x12r\n" +
+	"\x04task\x1a\x10edit task status\x82\xd3\xe4\x93\x02\x16:\x01*2\x11/api/v1/task/{id}\x12m\n" +
 	"\n" +
-	"DeleteTask\x12\x13.task.DeleteTaskReq\x1a\x16.google.protobuf.Empty\"7\x92A\x18\n" +
-	"\x04task\x1a\x10edit task status\x82\xd3\xe4\x93\x02\x16:\x01**\x11/api/v1/task/{id}B\x90\x01\x92A^\x125\n" +
+	"DeleteTask\x12\x13.task.DeleteTaskReq\x1a\x16.google.protobuf.Empty\"2\x92A\x13\n" +
+	"\x04task\x1a\vdelete task\x82\xd3\xe4\x93\x02\x16:\x01**\x11/api/v1/task/{id}B\x90\x01\x92A^\x125\n" +
 	"\fTask Service\x12\x1eAdvertising management service2\x051.0.0*\x01\x012\x10application/json:\x10application/jsonZ-github.com/georgysumerkin-source/training/genb\x06proto3"
 
 var file_task_service_proto_goTypes = []any{

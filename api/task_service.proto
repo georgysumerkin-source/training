@@ -69,7 +69,7 @@ service task_service {
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       tags: "task"
-      description: "edit task status"
+      description: "delete task"
     };
   }
 
