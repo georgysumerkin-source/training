@@ -2,11 +2,11 @@
 // source: task_service.proto
 
 /*
-Package _go is a reverse proxy.
+Package gen is a reverse proxy.
 
 It translates gRPC into RESTful JSON APIs.
 */
-package _go
+package gen
 
 import (
 	"context"

@@ -4,7 +4,7 @@
 // 	protoc        v7.36.1
 // source: task.proto
 
-package _go
+package gen
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -453,7 +453,7 @@ const file_task_proto_rawDesc = "" +
 	"\x17TASK_STATUS_UNSPECIFIED\x10\x00\x12\x13\n" +
 	"\x0fTASK_STATUS_NEW\x10\x01\x12\x1b\n" +
 	"\x17TASK_STATUS_IN_PROGRESS\x10\x02\x12\x14\n" +
-	"\x10TASK_STATUS_DONE\x10\x03B2Z0github.com/georgysumerkin-source/training/gen/gob\x06proto3"
+	"\x10TASK_STATUS_DONE\x10\x03B/Z-github.com/georgysumerkin-source/training/genb\x06proto3"
 
 var (
 	file_task_proto_rawDescOnce sync.Once

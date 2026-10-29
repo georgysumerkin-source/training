@@ -4,7 +4,7 @@
 // - protoc             v7.36.1
 // source: task_service.proto
 
-package _go
+package gen
 
 import (
 	context "context"

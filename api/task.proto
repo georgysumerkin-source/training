@@ -1,6 +1,6 @@
 syntax = "proto3";
 package task;
-option go_package = "github.com/georgysumerkin-source/training/gen/go";
+option go_package = "github.com/georgysumerkin-source/training/gen";
 
 message Task {
   string id = 1;
